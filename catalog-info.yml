@@ -1,0 +1,88 @@
+# catalog-info.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+# Drop this file at the ROOT of any service repository in GitLab.
+# Backstage will discover and ingest it automatically.
+#
+# Docs: https://backstage.io/docs/features/software-catalog/descriptor-format
+# ─────────────────────────────────────────────────────────────────────────────
+
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: my-first-service           # unique across your catalog (kebab-case)
+  title: "My First Service"        # human-readable display name
+  description: |
+    A short description of what this service does and why it exists.
+  annotations:
+    # Links Backstage to this GitLab repo — enables SCM widgets
+    gitlab.com/project-slug: YOUR_GROUP/YOUR_REPO
+
+    # If your company self-hosts GitLab, prefix with your host:
+    # gitlab.mycompany.com/project-slug: group/repo
+
+    # Jira project key — used by the Jira plugin later
+    # jira/project-key: PROJ
+
+    # PagerDuty integration key — used by PD plugin later
+    # pagerduty.com/integration-key: abc123
+
+  tags:
+    - python          # or go, node, java, etc.
+    - api
+
+  links:
+    - url: https://gitlab.com/YOUR_GROUP/YOUR_REPO
+      title: GitLab Repo
+      icon: gitlab
+    - url: https://YOUR_RUNBOOK_URL
+      title: Runbook
+      icon: docs
+
+spec:
+  type: service          # service | website | library | database | queue
+  lifecycle: production  # production | experimental | deprecated
+  owner: team-backend    # must match a Group entity (or use user:username)
+
+  # What system does this service belong to?
+  system: my-platform    # optional — define a System entity separately
+
+  # What APIs does this service provide?
+  # providesApis:
+  #   - my-first-service-api
+
+  # What does this service depend on?
+  # consumesApis:
+  #   - some-other-service-api
+  # dependsOn:
+  #   - resource:my-postgres-db
+  #   - component:auth-service
+
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# (Optional) Define the team that owns this service.
+# You can put this in a separate teams/catalog-info.yaml if you prefer.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: team-backend
+  description: Backend Platform Team
+spec:
+  type: team
+  profile:
+    displayName: Backend Team
+    email: backend-team@yourcompany.com
+  children: []
+
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# (Optional) Define the System this component belongs to.
+# A System groups related components together (e.g. "payments-platform").
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: my-platform
+  description: Core platform services
+spec:
+  owner: team-backend
