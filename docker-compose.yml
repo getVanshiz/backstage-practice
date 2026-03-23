@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # ─────────────────────────────────────────
+  # PostgreSQL — persistent volume so data
+  # survives container restarts
+  # ─────────────────────────────────────────
+  postgres:
+    image: postgres:16
+    container_name: backstage_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: backstage
+      POSTGRES_PASSWORD: backstage
+      POSTGRES_DB: backstage
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U backstage']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ─────────────────────────────────────────
+  # Backstage — built from your local source
+  # (see Dockerfile in this folder)
+  # ─────────────────────────────────────────
+  backstage:
+    build:
+      context: ./backstage-app        # the scaffolded app lives here
+      dockerfile: ../Dockerfile       # Dockerfile is one level up (this folder)
+    container_name: backstage_app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '7007:7007'
+    environment:
+      # Postgres connection — matches service above
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: backstage
+      POSTGRES_PASSWORD: backstage
+      # GitLab personal access token (scopes: read_api, read_repository)
+      GITLAB_TOKEN: ${GITLAB_TOKEN}
+      # App base URL
+      APP_BASE_URL: http://localhost:7007
+      BACKEND_BASE_URL: http://localhost:7007
+    volumes:
+      # Mount your app-config so you can edit it without rebuilding
+      - ./app-config.production.yaml:/app/app-config.production.yaml
+
+volumes:
+  postgres_data:
