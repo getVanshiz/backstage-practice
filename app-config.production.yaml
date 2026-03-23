@@ -1,0 +1,88 @@
+# app-config.production.yaml
+# This file OVERRIDES app-config.yaml for the Docker environment.
+# Secrets come from environment variables set in docker-compose.yml.
+# Never commit real tokens here.
+
+app:
+  title: "Service Catalog"
+  baseUrl: ${APP_BASE_URL}
+
+backend:
+  baseUrl: ${BACKEND_BASE_URL}
+  listen:
+    port: 7007
+    host: 0.0.0.0        # must be 0.0.0.0 inside Docker
+
+  # ── Database ────────────────────────────────────────────────────────────────
+  database:
+    client: pg
+    connection:
+      host:     ${POSTGRES_HOST}
+      port:     ${POSTGRES_PORT}
+      user:     ${POSTGRES_USER}
+      password: ${POSTGRES_PASSWORD}
+      database: backstage
+    # Backstage auto-creates schemas, no manual migration needed
+
+  # ── CORS (optional — useful if you later split frontend/backend) ───────────
+  cors:
+    origin: ${APP_BASE_URL}
+    methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
+    credentials: true
+
+# ── Auth (Guest mode — fine for local dev) ──────────────────────────────────
+# When you add Azure AD later, replace this entire section.
+auth:
+  environment: development
+  providers:
+    guest: {}
+
+# ── GitLab Integration ───────────────────────────────────────────────────────
+# GITLAB_TOKEN needs scopes: read_api, read_repository
+integrations:
+  gitlab:
+    - host: gitlab.com           # Change to your company's GitLab host
+                                 # e.g.  gitlab.mycompany.com
+      token: ${GITLAB_TOKEN}
+
+# ── Catalog Sources ──────────────────────────────────────────────────────────
+catalog:
+  # How often Backstage re-fetches catalog-info.yaml files (seconds)
+  processingInterval: { minutes: 1 }
+
+  rules:
+    # Allow all entity kinds. Tighten this later if needed.
+    - allow: [Component, System, API, Group, User, Resource, Location, Domain]
+
+  locations:
+    # ── 1. Manual bootstrap: your first service (edit path to your repo) ─────
+    # Once you add catalog-info.yaml to a GitLab repo, register it here.
+    # Format: https://<host>/<group>/<repo>/-/blob/<branch>/catalog-info.yaml
+    - type: url
+      target: https://gitlab.com/YOUR_GROUP/YOUR_REPO/-/blob/main/catalog-info.yaml
+      rules:
+        - allow: [Component, System, API]
+
+    # ── 2. GitLab Discovery — auto-finds every repo with a catalog-info.yaml ─
+    # Uncomment once you install @backstage/plugin-catalog-backend-module-gitlab
+    # - type: gitlab-discovery
+    #   target: https://gitlab.com/YOUR_GROUP/*/catalog-info.yaml
+
+  # ── Org data (Groups + Users) from GitLab ───────────────────────────────────
+  # Uncomment once you install the GitLab org plugin
+  # providers:
+  #   gitlab:
+  #     myGitlab:
+  #       host: gitlab.com
+  #       group: YOUR_GROUP
+  #       schedule:
+  #         frequency: { minutes: 30 }
+  #         timeout:   { minutes: 3 }
+
+# ── TechDocs (basic local mode) ──────────────────────────────────────────────
+techdocs:
+  builder: local
+  generator:
+    runIn: local
+  publisher:
+    type: local
